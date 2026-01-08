@@ -47,13 +47,18 @@ app.use(async (req, res) => {
             responseType: 'stream'
         });
 
+        // FIX: Remove headers that conflict with the decompressed stream
+        delete response.headers['content-length'];
+        delete response.headers['content-encoding'];
+        delete response.headers['transfer-encoding'];
+
         res.set(response.headers);
         response.data.pipe(res);
     } catch (error) {
-        // If upstream 404s, we 404. If network error, 502.
         if (error.response) {
             res.status(error.response.status).send(error.response.statusText);
         } else {
+            console.error(error); // Good to log the actual error for debugging
             res.status(502).send('Bad Gateway');
         }
     }
